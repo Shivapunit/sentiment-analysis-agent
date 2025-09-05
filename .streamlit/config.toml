@@ -1,6 +1,9 @@
 [theme]
+# This sets the default theme to dark. Users can change it in the app's settings menu.
+base="dark" 
 primaryColor="#61dafb"
 backgroundColor="#0B1D35"
 secondaryBackgroundColor="#1C355A"
 textColor="#FFFFFF"
+# Sets the font for the app.
 font="sans serif"
