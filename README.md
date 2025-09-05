@@ -1,6 +1,6 @@
 # 📈 TrendTrackr: Real-Time Sentiment Analysis Dashboard
 
-[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://YOUR_DEPLOY_ED_APP_LINK_HERE)
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://sentiment-analysis-dashboard-awaqv9nugudltikqkdwikg.streamlit.app/)
 
 A web-based dashboard that fetches recent news headlines for any user-provided query, performs sentiment analysis, and visualizes the results and historical trends in a clean, interactive, and mobile-friendly interface.
 
@@ -74,8 +74,8 @@ This feature was scoped out of the current project to focus on the core dashboar
 
 1.  **Clone the Repository**
     ```bash
-    git clone [https://github.com/YOUR_USERNAME/YOUR_REPOSITORY_NAME.git](https://github.com/YOUR_USERNAME/YOUR_REPOSITORY_NAME.git)
-    cd YOUR_REPOSITORY_NAME
+    git clone [https://github.com/CoderSaikat345/sentiment-analysis-dashboard.git](https://github.com/CoderSaikat345/sentiment-analysis-dashboard.git)
+    cd sentiment-analysis-dashboard
     ```
 
 2.  **Create and Activate a Virtual Environment**
