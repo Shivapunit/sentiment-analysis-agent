@@ -66,7 +66,7 @@ def generate_html_table(df):
 # --- Streamlit App Layout ---
 
 # --- Sidebar ---
-st.sidebar.image("https://github.com/CoderSaikat345/sentiment-analysis-dashboard/blob/main/logo.png", width=100) # <-- Added a simple logo
+st.sidebar.image("assets/logo.png", width=100) # <-- Added a simple logo
 st.sidebar.header("📈 TrendTrackr")
 st.sidebar.markdown("---")
 st.sidebar.subheader("How It Works")
