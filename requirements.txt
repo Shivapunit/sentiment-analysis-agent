@@ -1,0 +1,9 @@
+streamlit
+pandas
+plotly-express
+vaderSentiment
+wordcloud
+matplotlib
+newsapi-python
+pyarrow
+tabulate

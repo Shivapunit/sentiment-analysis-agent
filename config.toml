@@ -1,0 +1,7 @@
+# This file defines the custom color theme for the Streamlit application.
+[theme]
+primaryColor="#61dafb"
+backgroundColor="#0B1D35"
+secondaryBackgroundColor="#1C355A"
+textColor="#FFFFFF"
+font="sans serif"
