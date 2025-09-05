@@ -91,7 +91,7 @@ st.sidebar.info(
     "This dashboard performs real-time sentiment analysis. It fetches news headlines, analyzes each one using the VADER model, and visualizes the aggregated sentiment, including trends over time."
 )
 st.sidebar.markdown("---")
-st.sidebar.write("Built with passion by Anupam Mondal.")
+st.sidebar.write("Built with passion by Saikat Mondal.")
 
 st.title("📈 TrendTrackr: Real-Time Sentiment Dashboard")
 st.markdown("Analyze public sentiment and track trends for any topic. Enter a query to begin.")
