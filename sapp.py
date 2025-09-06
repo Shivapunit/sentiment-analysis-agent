@@ -145,7 +145,8 @@ if st.sidebar.button('Clear Cache'):
     st.cache_data.clear()
     st.success("Cache cleared!")
 st.sidebar.markdown("---")
-st.sidebar.write("Built with passion by Saikat Mondal.")
+# <-- FIX: Replaced space with a non-breaking space (&nbsp;) to keep the name on one line
+st.sidebar.markdown("Built with passion by, Saikat&nbsp;Mondal", unsafe_allow_html=True)
 
 col1_main, col2_main = st.columns([0.1, 0.9])
 with col1_main:
