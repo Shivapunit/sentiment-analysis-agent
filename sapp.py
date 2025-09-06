@@ -148,7 +148,7 @@ if st.sidebar.button('Clear Cache'):
     st.cache_data.clear()
     st.success("Cache cleared!")
 st.sidebar.markdown("---")
-st.sidebar.write("Built with passion by Saikat.")
+st.sidebar.write("Built with passion by Saikat Mondal.")
 
 col1_main, col2_main = st.columns([0.1, 0.9])
 with col1_main:
