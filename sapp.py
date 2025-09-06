@@ -47,11 +47,9 @@ def generate_wordcloud(text_series, title):
     """Generates and displays a word cloud with a transparent background."""
     text = ' '.join(text for text in text_series)
     if not text: return None
-    # <-- FIX: Removed the 'color_func' that was making all words white. Now the colormap works again.
     wordcloud = WordCloud(width=800, height=400, background_color=None, mode="RGBA", colormap='viridis').generate(text)
     fig, ax = plt.subplots()
     ax.imshow(wordcloud, interpolation='bilinear')
-    # The title inside the plot is kept white for readability
     ax.set_title(title, fontsize=20, color='white') 
     ax.axis('off')
     fig.patch.set_alpha(0.0)
@@ -135,38 +133,14 @@ with st.form(key='search_form'):
                         
                         tab1, tab2, tab3, tab4 = st.tabs(["📊 Sentiment Breakdown", "📈 Sentiment Over Time", "☁️ Word Clouds", "📰 Recent Mentions"])
                         
-                        with tab1:
-                            # ... (code is unchanged)
-                        with tab2:
-                            # ... (code is unchanged)
-                        with tab3:
-                            st.subheader("Most Frequent Words")
-                            col_wc1_wc, col_wc2_wc = st.columns(2)
-                            with col_wc1_wc:
-                                # <-- FIX: Replaced st.subheader with st.markdown for color control
-                                st.markdown("<h3 style='text-align: center;'>Positive Words</h3>", unsafe_allow_html=True)
-                                positive_text = df[df['sentiment'] == 'Positive']['title']
-                                fig_pos = generate_wordcloud(positive_text, "") # Title inside plot is now blank
-                                if fig_pos: st.pyplot(fig_pos, use_container_width=True)
-                                else: st.write("No positive words found.")
-                            with col_wc2_wc:
-                                # <-- FIX: Replaced st.subheader with st.markdown for color control
-                                st.markdown("<h3 style='text-align: center;'>Negative Words</h3>", unsafe_allow_html=True)
-                                negative_text = df[df['sentiment'] == 'Negative']['title']
-                                fig_neg = generate_wordcloud(negative_text, "") # Title inside plot is now blank
-                                if fig_neg: st.pyplot(fig_neg, use_container_width=True)
-                                else: st.write("No negative words found.")
-                        with tab4:
-                            # ... (code is unchanged)
-
-# Dummy sections to ensure the final code is complete as some parts were omitted for brevity
-# The following sections are copied from the last full version
+                        # --- THIS IS THE CORRECTED SECTION ---
                         with tab1:
                             st.subheader("Sentiment Distribution")
                             sentiment_counts = df['sentiment'].value_counts()
                             fig_pie = px.pie(sentiment_counts, values=sentiment_counts.values, names=sentiment_counts.index, color=sentiment_counts.index, color_discrete_map={'Positive':'#28a745', 'Negative':'#dc3545', 'Neutral':'#6c757d'})
                             fig_pie.update_layout(legend_title_text='Sentiment', paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='white')
                             st.plotly_chart(fig_pie, use_container_width=True)
+                        
                         with tab2:
                             st.subheader("Sentiment Trend")
                             df['date'] = pd.to_datetime(df['publishedAt']).dt.date
@@ -174,6 +148,23 @@ with st.form(key='search_form'):
                             fig_line = px.line(sentiment_by_day, x='date', y='compound', title='Average Sentiment Score Per Day', markers=True)
                             fig_line.update_layout(xaxis_title='Date', yaxis_title='Average Sentiment Score', paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='white')
                             st.plotly_chart(fig_line, use_container_width=True)
+
+                        with tab3:
+                            st.subheader("Most Frequent Words")
+                            col_wc1_wc, col_wc2_wc = st.columns(2)
+                            with col_wc1_wc:
+                                st.markdown("<h3 style='text-align: center;'>Positive Words</h3>", unsafe_allow_html=True)
+                                positive_text = df[df['sentiment'] == 'Positive']['title']
+                                fig_pos = generate_wordcloud(positive_text, "")
+                                if fig_pos: st.pyplot(fig_pos, use_container_width=True)
+                                else: st.write("No positive words found.")
+                            with col_wc2_wc:
+                                st.markdown("<h3 style='text-align: center;'>Negative Words</h3>", unsafe_allow_html=True)
+                                negative_text = df[df['sentiment'] == 'Negative']['title']
+                                fig_neg = generate_wordcloud(negative_text, "")
+                                if fig_neg: st.pyplot(fig_neg, use_container_width=True)
+                                else: st.write("No negative words found.")
+
                         with tab4:
                             st.subheader("Analyzed Headlines")
                             html_table = generate_html_table(df[['title', 'sentiment']])
