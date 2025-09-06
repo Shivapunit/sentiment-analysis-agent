@@ -63,12 +63,12 @@ def generate_html_table(df):
     html += "</tbody></table>"
     return html
 
-# --- NEW: UI Function for the Dashboard ---
+# --- UI Function for the Dashboard ---
 def display_dashboard(df):
     """Takes a DataFrame and displays the full sentiment analysis dashboard."""
     
     st.success(f"Analysis complete! Found {len(df)} articles.")
-    st.balloons() # <-- A little celebration!
+    # st.balloons() # <-- THIS LINE HAS BEEN REMOVED
     st.markdown("---")
     
     # --- Key Metrics as Styled Cards ---
@@ -76,7 +76,6 @@ def display_dashboard(df):
     overall_sentiment_score = df['compound'].mean()
     sentiment_label = "Positive" if overall_sentiment_score >= 0.05 else "Negative" if overall_sentiment_score <= -0.05 else "Neutral"
     
-    # <-- NEW: Custom Metric Cards ---
     st.subheader("Key Metrics")
     col1, col2, col3 = st.columns(3)
     with col1:
