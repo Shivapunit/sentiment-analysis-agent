@@ -6,10 +6,9 @@ A web-based dashboard that fetches recent news headlines for any user-provided q
 
 ---
 
-### **Live Demo GIF**
-*(Replace this text and the image link below with a GIF of your running application. Use a free tool like LICEcap or ScreenToGif.)*
+### **Live Demo**
 
-![Demo GIF of the Sentiment Analysis Dashboard](![Image](https://github.com/user-attachments/assets/d223b94f-ca05-45e2-a12e-5001a5257f5e))
+![Image](https://github.com/user-attachments/assets/d223b94f-ca05-45e2-a12e-5001a5257f5e)
 
 ---
 
@@ -100,4 +99,3 @@ This feature was scoped out of the current project to focus on the core dashboar
     streamlit run sapp.py
     ```
 The application will now be running and accessible at `http://localhost:8501`.
-
