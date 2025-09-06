@@ -68,10 +68,8 @@ def display_dashboard(df):
     """Takes a DataFrame and displays the full sentiment analysis dashboard."""
     
     st.success(f"Analysis complete! Found {len(df)} articles.")
-    # st.balloons() # <-- THIS LINE HAS BEEN REMOVED
     st.markdown("---")
     
-    # --- Key Metrics as Styled Cards ---
     total_headlines = len(df)
     overall_sentiment_score = df['compound'].mean()
     sentiment_label = "Positive" if overall_sentiment_score >= 0.05 else "Negative" if overall_sentiment_score <= -0.05 else "Neutral"
@@ -83,7 +81,8 @@ def display_dashboard(df):
             st.markdown(f"<div style='text-align: center;'><span style='font-size: 1.2em; color: grey;'>📰 Total Headlines</span><br><b style='font-size: 2.5em;'>{total_headlines}</b></div>", unsafe_allow_html=True)
     with col2:
         with st.container(border=True):
-            st.markdown(f"<div style='text-align: center;'><span style='font-size: 1.2em; color: grey;'>🧠 Overall Sentiment</span><br><b style='font-size: 2.5em;'>{sentiment_label}</b></div>", unsafe_allow_html=True)
+            # <-- FIX: Replaced the brain emoji with a more compatible one
+            st.markdown(f"<div style='text-align: center;'><span style='font-size: 1.2em; color: grey;'>💬 Overall Sentiment</span><br><b style='font-size: 2.5em;'>{sentiment_label}</b></div>", unsafe_allow_html=True)
     with col3:
         with st.container(border=True):
             st.markdown(f"<div style='text-align: center;'><span style='font-size: 1.2em; color: grey;'>📈 Avg. Score</span><br><b style='font-size: 2.5em;'>{overall_sentiment_score:.2f}</b></div>", unsafe_allow_html=True)
@@ -125,10 +124,9 @@ def display_dashboard(df):
     with tab4:
         st.subheader("Analyzed Headlines")
         html_table = generate_html_table(df[['title', 'sentiment']])
-        st.markdown(f'<div style="height: 400px; overflow-y: auto;">{html_table}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div style='height: 400px; overflow-y: auto;'>{html_table}</div>', unsafe_allow_html=True)
 
 # --- Streamlit App Layout ---
-
 # --- Sidebar ---
 st.sidebar.image("assets/logo.png", width=100)
 st.sidebar.caption("Tracking trends, decoding sentiment.")
@@ -174,7 +172,6 @@ if submitted:
                 else:
                     df = pd.DataFrame(headlines_data)
                     df = analyze_sentiment(df)
-                    # Store the DataFrame in session state to persist it
                     st.session_state['results_df'] = df
 
 # --- Display Dashboard if results exist in session state ---
