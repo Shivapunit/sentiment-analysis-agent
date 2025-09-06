@@ -20,12 +20,13 @@ A web-based dashboard that fetches recent news headlines for any user-provided q
 -   **Time-Series Analysis**: Plots the average sentiment score per day on an interactive line chart to reveal trends over time.
 -   **Efficient Caching**: Implemented `@st.cache_data` to cache API results for one hour, with a manual "Clear Cache" button for data freshness.
 -   **Interactive Dashboard**: A polished UI with a custom theme (light/dark mode supported), organized into clear tabs for an intuitive user experience.
+-   **Data Export**: Allows users to download the full analysis results as a CSV file.
 -   **Rich Visualizations**:
-    -   Key performance metrics (Total Headlines, Overall Sentiment, Average Score).
+    -   Custom-styled metric cards for key insights (Total Headlines, Overall Sentiment, Average Score).
     -   An interactive pie chart for sentiment distribution.
     -   Insightful word clouds for positive and negative keywords.
     -   A custom-styled, scrollable HTML table for detailed results.
--   **User-Friendly Interface**: Includes a professional header, placeholder examples, and responds to the "Enter" key for submission.
+-   **User-Friendly Interface**: Includes a professional header with a logo, placeholder examples, and responds to the "Enter" key for submission.
 
 ---
 
