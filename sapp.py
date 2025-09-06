@@ -8,7 +8,7 @@ from newsapi import NewsApiClient
 
 # --- Page Configuration ---
 st.set_page_config(
-    page_title="TrendTrackr - Sentiment Dashboard", 
+    page_title="TrendTrackr - Sentiment Dashboard",
     page_icon="assets/logo.png",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -65,15 +65,13 @@ def generate_html_table(df):
 
 # --- UI Function for the Dashboard ---
 def display_dashboard(df, search_query):
-    """Takes a DataFrame and displays the full sentiment analysis dashboard."""
-    
     st.success(f"Analysis complete! Found {len(df)} articles.")
     st.markdown("---")
-    
+
     total_headlines = len(df)
     overall_sentiment_score = df['compound'].mean()
     sentiment_label = "Positive" if overall_sentiment_score >= 0.05 else "Negative" if overall_sentiment_score <= -0.05 else "Neutral"
-    
+
     st.subheader("Key Metrics")
     col1, col2, col3 = st.columns(3)
     with col1:
@@ -87,15 +85,14 @@ def display_dashboard(df, search_query):
             st.markdown(f"<div style='text-align: center;'><span style='font-size: 1.2em; color: grey;'>📈 Avg. Score</span><br><b style='font-size: 2.5em;'>{overall_sentiment_score:.2f}</b></div>", unsafe_allow_html=True)
 
     tab1, tab2, tab3, tab4 = st.tabs(["📊 Sentiment Breakdown", "📈 Sentiment Over Time", "☁️ Word Clouds", "📰 Recent Mentions"])
-    
-    # --- THIS IS THE CORRECTED SECTION ---
+
     with tab1:
         st.subheader("Sentiment Distribution")
         sentiment_counts = df['sentiment'].value_counts()
         fig_pie = px.pie(sentiment_counts, values=sentiment_counts.values, names=sentiment_counts.index, color=sentiment_counts.index, color_discrete_map={'Positive':'#28a745', 'Negative':'#dc3545', 'Neutral':'#6c757d'})
         fig_pie.update_layout(legend_title_text='Sentiment', paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='white')
         st.plotly_chart(fig_pie, use_container_width=True)
-    
+
     with tab2:
         st.subheader("Sentiment Trend")
         df['date'] = pd.to_datetime(df['publishedAt']).dt.date
