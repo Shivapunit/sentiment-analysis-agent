@@ -81,13 +81,11 @@ def display_dashboard(df):
             st.markdown(f"<div style='text-align: center;'><span style='font-size: 1.2em; color: grey;'>📰 Total Headlines</span><br><b style='font-size: 2.5em;'>{total_headlines}</b></div>", unsafe_allow_html=True)
     with col2:
         with st.container(border=True):
-            # <-- FIX: Replaced the brain emoji with a more compatible one
             st.markdown(f"<div style='text-align: center;'><span style='font-size: 1.2em; color: grey;'>💬 Overall Sentiment</span><br><b style='font-size: 2.5em;'>{sentiment_label}</b></div>", unsafe_allow_html=True)
     with col3:
         with st.container(border=True):
             st.markdown(f"<div style='text-align: center;'><span style='font-size: 1.2em; color: grey;'>📈 Avg. Score</span><br><b style='font-size: 2.5em;'>{overall_sentiment_score:.2f}</b></div>", unsafe_allow_html=True)
 
-    # --- Tabs for organized content ---
     tab1, tab2, tab3, tab4 = st.tabs(["📊 Sentiment Breakdown", "📈 Sentiment Over Time", "☁️ Word Clouds", "📰 Recent Mentions"])
     
     with tab1:
@@ -124,10 +122,10 @@ def display_dashboard(df):
     with tab4:
         st.subheader("Analyzed Headlines")
         html_table = generate_html_table(df[['title', 'sentiment']])
-        st.markdown(f'<div style='height: 400px; overflow-y: auto;'>{html_table}</div>', unsafe_allow_html=True)
+        # <-- THIS IS THE FIX: Changed the inner single quotes to double quotes
+        st.markdown(f'<div style="height: 400px; overflow-y: auto;">{html_table}</div>', unsafe_allow_html=True)
 
 # --- Streamlit App Layout ---
-# --- Sidebar ---
 st.sidebar.image("assets/logo.png", width=100)
 st.sidebar.caption("Tracking trends, decoding sentiment.")
 st.sidebar.header("📈 TrendTrackr")
@@ -144,7 +142,6 @@ if st.sidebar.button('Clear Cache'):
 st.sidebar.markdown("---")
 st.sidebar.write("Built with passion by Saikat.")
 
-# --- Main Page ---
 col1, col2 = st.columns([0.1, 0.9])
 with col1:
     st.image("assets/logo.png", width=80)
@@ -152,7 +149,6 @@ with col2:
     st.title("TrendTrackr: Real-Time Sentiment Dashboard")
 st.markdown("Analyze public sentiment and track trends for any topic. Enter a query below to begin.")
 
-# --- Input Section using st.form ---
 with st.form(key='search_form'):
     search_query = st.text_input("Search Query", placeholder="e.g., Apple, Climate Change, The latest Marvel movie")
     submitted = st.form_submit_button("Analyze Sentiment")
@@ -174,6 +170,5 @@ if submitted:
                     df = analyze_sentiment(df)
                     st.session_state['results_df'] = df
 
-# --- Display Dashboard if results exist in session state ---
 if 'results_df' in st.session_state:
     display_dashboard(st.session_state['results_df'])
