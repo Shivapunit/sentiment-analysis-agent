@@ -64,7 +64,7 @@ def generate_html_table(df):
     return html
 
 # --- UI Function for the Dashboard ---
-def display_dashboard(df, search_query): # <-- MODIFIED: Added search_query as an argument
+def display_dashboard(df, search_query):
     """Takes a DataFrame and displays the full sentiment analysis dashboard."""
     
     st.success(f"Analysis complete! Found {len(df)} articles.")
@@ -88,33 +88,52 @@ def display_dashboard(df, search_query): # <-- MODIFIED: Added search_query as a
 
     tab1, tab2, tab3, tab4 = st.tabs(["📊 Sentiment Breakdown", "📈 Sentiment Over Time", "☁️ Word Clouds", "📰 Recent Mentions"])
     
+    # --- THIS IS THE CORRECTED SECTION ---
     with tab1:
-        # ... (code is unchanged)
+        st.subheader("Sentiment Distribution")
+        sentiment_counts = df['sentiment'].value_counts()
+        fig_pie = px.pie(sentiment_counts, values=sentiment_counts.values, names=sentiment_counts.index, color=sentiment_counts.index, color_discrete_map={'Positive':'#28a745', 'Negative':'#dc3545', 'Neutral':'#6c757d'})
+        fig_pie.update_layout(legend_title_text='Sentiment', paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='white')
+        st.plotly_chart(fig_pie, use_container_width=True)
+    
     with tab2:
-        # ... (code is unchanged)
+        st.subheader("Sentiment Trend")
+        df['date'] = pd.to_datetime(df['publishedAt']).dt.date
+        sentiment_by_day = df.groupby('date')['compound'].mean().reset_index()
+        fig_line = px.line(sentiment_by_day, x='date', y='compound', title='Average Sentiment Score Per Day', markers=True)
+        fig_line.update_layout(xaxis_title='Date', yaxis_title='Average Sentiment Score', paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='white')
+        st.plotly_chart(fig_line, use_container_width=True)
+
     with tab3:
-        # ... (code is unchanged)
+        st.subheader("Most Frequent Words")
+        col_wc1, col_wc2 = st.columns(2)
+        with col_wc1:
+            st.markdown("<h3 style='text-align: center;'>Positive Words</h3>", unsafe_allow_html=True)
+            positive_text = df[df['sentiment'] == 'Positive']['title']
+            fig_pos = generate_wordcloud(positive_text, "")
+            if fig_pos: st.pyplot(fig_pos, use_container_width=True)
+            else: st.write("No positive words found.")
+        with col_wc2:
+            st.markdown("<h3 style='text-align: center;'>Negative Words</h3>", unsafe_allow_html=True)
+            negative_text = df[df['sentiment'] == 'Negative']['title']
+            fig_neg = generate_wordcloud(negative_text, "")
+            if fig_neg: st.pyplot(fig_neg, use_container_width=True)
+            else: st.write("No negative words found.")
+
     with tab4:
         st.subheader("Analyzed Headlines")
-        
-        # --- NEW: Download Button ---
-        # 1. Convert DataFrame to CSV format for downloading
         csv = df[['title', 'sentiment', 'compound']].to_csv(index=False).encode('utf-8')
-        
-        # 2. Create the download button
         st.download_button(
            label="📥 Download Results as CSV",
            data=csv,
            file_name=f'sentiment_analysis_{search_query.replace(" ", "_")}.csv',
            mime='text/csv',
         )
-        st.markdown("---") # Adds a visual separator
-        
+        st.markdown("---")
         html_table = generate_html_table(df[['title', 'sentiment']])
         st.markdown(f'<div style="height: 400px; overflow-y: auto;">{html_table}</div>', unsafe_allow_html=True)
 
-# --- Streamlit App Layout (Sidebar and Header are unchanged) ---
-# --- Sidebar ---
+# --- Streamlit App Layout ---
 st.sidebar.image("assets/logo.png", width=100)
 st.sidebar.caption("Tracking trends, decoding sentiment.")
 st.sidebar.header("📈 TrendTrackr")
@@ -122,7 +141,7 @@ st.sidebar.markdown("---")
 with st.sidebar.expander("ℹ️ About & Data Source", expanded=True):
     st.markdown("""
         - **About:** This app analyzes the sentiment of recent news headlines for any topic.
-        - **Data:** Real-time headlines from [NewsAPI.org](https://newsapi.org/).
+        - **Data:** Real-time headlines from [NewsAPI.org](https://newsAPI.org/).
         - **Model:** Sentiment analysis by VADER.
     """)
 if st.sidebar.button('Clear Cache'):
@@ -131,15 +150,13 @@ if st.sidebar.button('Clear Cache'):
 st.sidebar.markdown("---")
 st.sidebar.write("Built with passion by Saikat.")
 
-# --- Main Page ---
-col1, col2 = st.columns([0.1, 0.9])
-with col1:
+col1_main, col2_main = st.columns([0.1, 0.9])
+with col1_main:
     st.image("assets/logo.png", width=80)
-with col2:
+with col2_main:
     st.title("TrendTrackr: Real-Time Sentiment Dashboard")
 st.markdown("Analyze public sentiment and track trends for any topic. Enter a query below to begin.")
 
-# --- Input Section using st.form ---
 with st.form(key='search_form'):
     search_query = st.text_input("Search Query", placeholder="e.g., Apple, Climate Change, The latest Marvel movie")
     submitted = st.form_submit_button("Analyze Sentiment")
@@ -159,44 +176,8 @@ if submitted:
                 else:
                     df = pd.DataFrame(headlines_data)
                     df = analyze_sentiment(df)
-                    # --- MODIFIED: Store the search query along with the results ---
                     st.session_state['results_df'] = df
                     st.session_state['search_query'] = search_query
 
-# --- Display Dashboard if results exist in session state ---
 if 'results_df' in st.session_state:
-    # --- MODIFIED: Pass the stored search query to the display function ---
     display_dashboard(st.session_state['results_df'], st.session_state['search_query'])
-
-# Dummy sections to ensure the final code is complete
-# The following sections are copied from the last full version
-if 'results_df' in st.session_state:
-    df = st.session_state['results_df']
-    with st.tabs(["📊 Sentiment Breakdown", "📈 Sentiment Over Time", "☁️ Word Clouds", "📰 Recent Mentions"])[0]:
-        st.subheader("Sentiment Distribution")
-        sentiment_counts = df['sentiment'].value_counts()
-        fig_pie = px.pie(sentiment_counts, values=sentiment_counts.values, names=sentiment_counts.index, color=sentiment_counts.index, color_discrete_map={'Positive':'#28a745', 'Negative':'#dc3545', 'Neutral':'#6c757d'})
-        fig_pie.update_layout(legend_title_text='Sentiment', paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='white')
-        st.plotly_chart(fig_pie, use_container_width=True)
-    with st.tabs(["📊 Sentiment Breakdown", "📈 Sentiment Over Time", "☁️ Word Clouds", "📰 Recent Mentions"])[1]:
-        st.subheader("Sentiment Trend")
-        df['date'] = pd.to_datetime(df['publishedAt']).dt.date
-        sentiment_by_day = df.groupby('date')['compound'].mean().reset_index()
-        fig_line = px.line(sentiment_by_day, x='date', y='compound', title='Average Sentiment Score Per Day', markers=True)
-        fig_line.update_layout(xaxis_title='Date', yaxis_title='Average Sentiment Score', paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='white')
-        st.plotly_chart(fig_line, use_container_width=True)
-    with st.tabs(["📊 Sentiment Breakdown", "📈 Sentiment Over Time", "☁️ Word Clouds", "📰 Recent Mentions"])[2]:
-        st.subheader("Most Frequent Words")
-        col_wc1, col_wc2 = st.columns(2)
-        with col_wc1:
-            st.markdown("<h3 style='text-align: center;'>Positive Words</h3>", unsafe_allow_html=True)
-            positive_text = df[df['sentiment'] == 'Positive']['title']
-            fig_pos = generate_wordcloud(positive_text, "")
-            if fig_pos: st.pyplot(fig_pos, use_container_width=True)
-            else: st.write("No positive words found.")
-        with col_wc2:
-            st.markdown("<h3 style='text-align: center;'>Negative Words</h3>", unsafe_allow_html=True)
-            negative_text = df[df['sentiment'] == 'Negative']['title']
-            fig_neg = generate_wordcloud(negative_text, "")
-            if fig_neg: st.pyplot(fig_neg, use_container_width=True)
-            else: st.write("No negative words found.")
