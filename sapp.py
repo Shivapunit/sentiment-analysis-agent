@@ -20,7 +20,6 @@ analyzer = SentimentIntensityAnalyzer()
 # --- HELPER FUNCTIONS ---
 @st.cache_data(ttl=3600)
 def fetch_news(query, api_key):
-    """Fetches news using the NewsAPI.org service and caches the results."""
     if not api_key:
         return "Error: News API key is not configured in the app's secrets."
     try:
@@ -33,7 +32,6 @@ def fetch_news(query, api_key):
     return [{'title': article['title'], 'publishedAt': article['publishedAt']} for article in all_articles['articles']]
 
 def analyze_sentiment(df):
-    """Analyzes the sentiment of headlines in a DataFrame."""
     df['sentiment_scores'] = df['title'].apply(lambda title: analyzer.polarity_scores(title))
     df['compound'] = df['sentiment_scores'].apply(lambda score_dict: score_dict['compound'])
     def classify_sentiment(compound_score):
@@ -44,19 +42,17 @@ def analyze_sentiment(df):
     return df
 
 def generate_wordcloud(text_series, title):
-    """Generates and displays a word cloud with a transparent background."""
     text = ' '.join(text for text in text_series)
     if not text: return None
     wordcloud = WordCloud(width=800, height=400, background_color=None, mode="RGBA", colormap='viridis').generate(text)
     fig, ax = plt.subplots()
     ax.imshow(wordcloud, interpolation='bilinear')
-    ax.set_title(title, fontsize=20, color='white') 
+    ax.set_title(title, fontsize=20, color='white')
     ax.axis('off')
     fig.patch.set_alpha(0.0)
     return fig
 
 def generate_html_table(df):
-    """Generates a styled HTML table from a DataFrame with colored sentiment."""
     sentiment_colors = {'Positive': '#28a745', 'Negative': '#dc3545', 'Neutral': 'grey'}
     html = """<style>.styled-table{width:100%;border-collapse:collapse;}.styled-table th,.styled-table td{padding:12px 15px;text-align:left;}.styled-table th{background-color:#1C355A;color:#FFFFFF;border-bottom:2px solid #61dafb;}.styled-table tr{border-bottom:1px solid #1C355A;}</style><table class="styled-table"><thead><tr><th>Title</th><th>Sentiment</th></tr></thead><tbody>"""
     for _, row in df.iterrows():
@@ -67,6 +63,71 @@ def generate_html_table(df):
     html += "</tbody></table>"
     return html
 
+# --- NEW: UI Function for the Dashboard ---
+def display_dashboard(df):
+    """Takes a DataFrame and displays the full sentiment analysis dashboard."""
+    
+    st.success(f"Analysis complete! Found {len(df)} articles.")
+    st.balloons() # <-- A little celebration!
+    st.markdown("---")
+    
+    # --- Key Metrics as Styled Cards ---
+    total_headlines = len(df)
+    overall_sentiment_score = df['compound'].mean()
+    sentiment_label = "Positive" if overall_sentiment_score >= 0.05 else "Negative" if overall_sentiment_score <= -0.05 else "Neutral"
+    
+    # <-- NEW: Custom Metric Cards ---
+    st.subheader("Key Metrics")
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        with st.container(border=True):
+            st.markdown(f"<div style='text-align: center;'><span style='font-size: 1.2em; color: grey;'>📰 Total Headlines</span><br><b style='font-size: 2.5em;'>{total_headlines}</b></div>", unsafe_allow_html=True)
+    with col2:
+        with st.container(border=True):
+            st.markdown(f"<div style='text-align: center;'><span style='font-size: 1.2em; color: grey;'>🧠 Overall Sentiment</span><br><b style='font-size: 2.5em;'>{sentiment_label}</b></div>", unsafe_allow_html=True)
+    with col3:
+        with st.container(border=True):
+            st.markdown(f"<div style='text-align: center;'><span style='font-size: 1.2em; color: grey;'>📈 Avg. Score</span><br><b style='font-size: 2.5em;'>{overall_sentiment_score:.2f}</b></div>", unsafe_allow_html=True)
+
+    # --- Tabs for organized content ---
+    tab1, tab2, tab3, tab4 = st.tabs(["📊 Sentiment Breakdown", "📈 Sentiment Over Time", "☁️ Word Clouds", "📰 Recent Mentions"])
+    
+    with tab1:
+        st.subheader("Sentiment Distribution")
+        sentiment_counts = df['sentiment'].value_counts()
+        fig_pie = px.pie(sentiment_counts, values=sentiment_counts.values, names=sentiment_counts.index, color=sentiment_counts.index, color_discrete_map={'Positive':'#28a745', 'Negative':'#dc3545', 'Neutral':'#6c757d'})
+        fig_pie.update_layout(legend_title_text='Sentiment', paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='white')
+        st.plotly_chart(fig_pie, use_container_width=True)
+    
+    with tab2:
+        st.subheader("Sentiment Trend")
+        df['date'] = pd.to_datetime(df['publishedAt']).dt.date
+        sentiment_by_day = df.groupby('date')['compound'].mean().reset_index()
+        fig_line = px.line(sentiment_by_day, x='date', y='compound', title='Average Sentiment Score Per Day', markers=True)
+        fig_line.update_layout(xaxis_title='Date', yaxis_title='Average Sentiment Score', paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='white')
+        st.plotly_chart(fig_line, use_container_width=True)
+
+    with tab3:
+        st.subheader("Most Frequent Words")
+        col_wc1, col_wc2 = st.columns(2)
+        with col_wc1:
+            st.markdown("<h3 style='text-align: center;'>Positive Words</h3>", unsafe_allow_html=True)
+            positive_text = df[df['sentiment'] == 'Positive']['title']
+            fig_pos = generate_wordcloud(positive_text, "")
+            if fig_pos: st.pyplot(fig_pos, use_container_width=True)
+            else: st.write("No positive words found.")
+        with col_wc2:
+            st.markdown("<h3 style='text-align: center;'>Negative Words</h3>", unsafe_allow_html=True)
+            negative_text = df[df['sentiment'] == 'Negative']['title']
+            fig_neg = generate_wordcloud(negative_text, "")
+            if fig_neg: st.pyplot(fig_neg, use_container_width=True)
+            else: st.write("No negative words found.")
+
+    with tab4:
+        st.subheader("Analyzed Headlines")
+        html_table = generate_html_table(df[['title', 'sentiment']])
+        st.markdown(f'<div style="height: 400px; overflow-y: auto;">{html_table}</div>', unsafe_allow_html=True)
+
 # --- Streamlit App Layout ---
 
 # --- Sidebar ---
@@ -74,13 +135,11 @@ st.sidebar.image("assets/logo.png", width=100)
 st.sidebar.caption("Tracking trends, decoding sentiment.")
 st.sidebar.header("📈 TrendTrackr")
 st.sidebar.markdown("---")
-st.sidebar.subheader("How It Works")
-st.sidebar.info("This dashboard performs real-time sentiment analysis on news headlines, visualizing trends and public perception for any topic.")
-with st.sidebar.expander("ℹ️ Data Source & Accuracy"):
+with st.sidebar.expander("ℹ️ Data Source & Accuracy", expanded=True):
     st.markdown("""
-        - **Data Source:** News headlines are fetched from [NewsAPI.org](https://newsapi.org/).
-        - **Sentiment Model:** Sentiment is determined using VADER, a model tuned for short texts.
-        - **Accuracy:** As a predictive model, sentiment analysis may not be 100% accurate in all contexts (e.g., sarcasm).
+        - **Data:** Real-time headlines from [NewsAPI.org](https://newsapi.org/).
+        - **Model:** Sentiment analysis by VADER, a model tuned for short texts.
+        - **Note:** Sentiment analysis is predictive and may not be 100% accurate in all contexts.
     """)
 if st.sidebar.button('Clear Cache'):
     st.cache_data.clear()
@@ -94,78 +153,31 @@ with col1:
     st.image("assets/logo.png", width=80)
 with col2:
     st.title("TrendTrackr: Real-Time Sentiment Dashboard")
-st.markdown("Analyze public sentiment and track trends for any topic. Enter a query to begin.")
+st.markdown("Analyze public sentiment and track trends for any topic. Enter a query below to begin.")
 
-# --- Input Section ---
+# --- Input Section using st.form ---
 with st.form(key='search_form'):
-    search_query = st.text_input(
-        "Enter a brand, topic, or keyword", 
-        placeholder="e.g., Apple, Climate Change, The latest Marvel movie"
-    )
+    search_query = st.text_input("Search Query", placeholder="e.g., Apple, Climate Change, The latest Marvel movie")
     submitted = st.form_submit_button("Analyze Sentiment")
 
-    if submitted:
-        if not search_query:
-            st.warning("Please enter a search query.")
+if submitted:
+    if not search_query:
+        st.warning("Please enter a search query.")
+    else:
+        api_key = st.secrets.get("NEWS_API_KEY")
+        if not api_key:
+            st.error("News API key is not configured. Please contact the app administrator.")
         else:
-            api_key = st.secrets.get("NEWS_API_KEY")
-            if not api_key:
-                st.error("News API key is not configured. Please contact the app administrator.")
-            else:
-                with st.spinner("Brewing insights... ☕ This may take a moment."):
-                    headlines_data = fetch_news(search_query, api_key)
-                    if isinstance(headlines_data, str):
-                        st.error(headlines_data)
-                    else:
-                        df = pd.DataFrame(headlines_data)
-                        df = analyze_sentiment(df)
-                        st.success(f"Analysis complete! Found {len(df)} articles.")
-                        st.markdown("---")
-                        
-                        total_headlines = len(df)
-                        overall_sentiment_score = df['compound'].mean()
-                        sentiment_label = "Positive" if overall_sentiment_score >= 0.05 else "Negative" if overall_sentiment_score <= -0.05 else "Neutral"
-                        
-                        col1_metric, col2_metric, col3_metric = st.columns(3)
-                        col1_metric.metric("📰 Total Headlines", f"{total_headlines}")
-                        col2_metric.metric("🧠 Overall Sentiment", sentiment_label)
-                        col3_metric.metric("📈 Avg. Score", f"{overall_sentiment_score:.2f}")
-                        
-                        tab1, tab2, tab3, tab4 = st.tabs(["📊 Sentiment Breakdown", "📈 Sentiment Over Time", "☁️ Word Clouds", "📰 Recent Mentions"])
-                        
-                        # --- THIS IS THE CORRECTED SECTION ---
-                        with tab1:
-                            st.subheader("Sentiment Distribution")
-                            sentiment_counts = df['sentiment'].value_counts()
-                            fig_pie = px.pie(sentiment_counts, values=sentiment_counts.values, names=sentiment_counts.index, color=sentiment_counts.index, color_discrete_map={'Positive':'#28a745', 'Negative':'#dc3545', 'Neutral':'#6c757d'})
-                            fig_pie.update_layout(legend_title_text='Sentiment', paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='white')
-                            st.plotly_chart(fig_pie, use_container_width=True)
-                        
-                        with tab2:
-                            st.subheader("Sentiment Trend")
-                            df['date'] = pd.to_datetime(df['publishedAt']).dt.date
-                            sentiment_by_day = df.groupby('date')['compound'].mean().reset_index()
-                            fig_line = px.line(sentiment_by_day, x='date', y='compound', title='Average Sentiment Score Per Day', markers=True)
-                            fig_line.update_layout(xaxis_title='Date', yaxis_title='Average Sentiment Score', paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='white')
-                            st.plotly_chart(fig_line, use_container_width=True)
+            with st.spinner("Brewing insights... ☕ This may take a moment."):
+                headlines_data = fetch_news(search_query, api_key)
+                if isinstance(headlines_data, str):
+                    st.error(headlines_data)
+                else:
+                    df = pd.DataFrame(headlines_data)
+                    df = analyze_sentiment(df)
+                    # Store the DataFrame in session state to persist it
+                    st.session_state['results_df'] = df
 
-                        with tab3:
-                            st.subheader("Most Frequent Words")
-                            col_wc1_wc, col_wc2_wc = st.columns(2)
-                            with col_wc1_wc:
-                                st.markdown("<h3 style='text-align: center;'>Positive Words</h3>", unsafe_allow_html=True)
-                                positive_text = df[df['sentiment'] == 'Positive']['title']
-                                fig_pos = generate_wordcloud(positive_text, "")
-                                if fig_pos: st.pyplot(fig_pos, use_container_width=True)
-                                else: st.write("No positive words found.")
-                            with col_wc2_wc:
-                                st.markdown("<h3 style='text-align: center;'>Negative Words</h3>", unsafe_allow_html=True)
-                                negative_text = df[df['sentiment'] == 'Negative']['title']
-                                fig_neg = generate_wordcloud(negative_text, "")
-                                if fig_neg: st.pyplot(fig_neg, use_container_width=True)
-                                else: st.write("No negative words found.")
-
-                        with tab4:
-                            st.subheader("Analyzed Headlines")
-                            html_table = generate_html_table(df[['title', 'sentiment']])
-                            st.markdown(f'<div style="height: 400px; overflow-y: auto;">{html_table}</div>', unsafe_allow_html=True)
+# --- Display Dashboard if results exist in session state ---
+if 'results_df' in st.session_state:
+    display_dashboard(st.session_state['results_df'])
