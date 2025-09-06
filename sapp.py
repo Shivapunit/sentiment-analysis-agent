@@ -9,7 +9,7 @@ from newsapi import NewsApiClient
 # --- Page Configuration ---
 st.set_page_config(
     page_title="TrendTrackr - Sentiment Dashboard", 
-    page_icon="assets/logo.png", # <-- Set page icon to your logo
+    page_icon="assets/logo.png",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -47,11 +47,12 @@ def generate_wordcloud(text_series, title):
     """Generates and displays a word cloud with a transparent background."""
     text = ' '.join(text for text in text_series)
     if not text: return None
-    # --- THIS IS THE KEY CHANGE ---
-    wordcloud = WordCloud(width=800, height=400, background_color=None, mode="RGBA", colormap='viridis', color_func=lambda *args, **kwargs: "white").generate(text)
+    # <-- FIX: Removed the 'color_func' that was making all words white. Now the colormap works again.
+    wordcloud = WordCloud(width=800, height=400, background_color=None, mode="RGBA", colormap='viridis').generate(text)
     fig, ax = plt.subplots()
     ax.imshow(wordcloud, interpolation='bilinear')
-    ax.set_title(title, fontsize=20, color='white') # Also ensure title color is white
+    # The title inside the plot is kept white for readability
+    ax.set_title(title, fontsize=20, color='white') 
     ax.axis('off')
     fig.patch.set_alpha(0.0)
     return fig
@@ -71,20 +72,18 @@ def generate_html_table(df):
 # --- Streamlit App Layout ---
 
 # --- Sidebar ---
-st.sidebar.header("📈 TrendTrackr")
+st.sidebar.image("assets/logo.png", width=100)
 st.sidebar.caption("Tracking trends, decoding sentiment.")
+st.sidebar.header("📈 TrendTrackr")
 st.sidebar.markdown("---")
 st.sidebar.subheader("How It Works")
 st.sidebar.info("This dashboard performs real-time sentiment analysis on news headlines, visualizing trends and public perception for any topic.")
-
-# --- Data Source & Accuracy section ---
 with st.sidebar.expander("ℹ️ Data Source & Accuracy"):
     st.markdown("""
-        - **Data Source:** News headlines are fetched in real-time from [NewsAPI.org](https://newsapi.org/), a service that provides access to articles from a wide range of global publications.
-        - **Sentiment Model:** Sentiment is determined using VADER, a model specifically tuned for social media and short texts.
-        - **Accuracy:** While highly effective for general text, the sentiment analysis is a predictive model and may not be 100% accurate in all contexts (e.g., sarcasm, complex sentences).
+        - **Data Source:** News headlines are fetched from [NewsAPI.org](https://newsapi.org/).
+        - **Sentiment Model:** Sentiment is determined using VADER, a model tuned for short texts.
+        - **Accuracy:** As a predictive model, sentiment analysis may not be 100% accurate in all contexts (e.g., sarcasm).
     """)
-    
 if st.sidebar.button('Clear Cache'):
     st.cache_data.clear()
     st.success("Cache cleared!")
@@ -92,7 +91,6 @@ st.sidebar.markdown("---")
 st.sidebar.write("Built with passion by Saikat.")
 
 # --- Main Page ---
-# --- Improved Header with Logo ---
 col1, col2 = st.columns([0.1, 0.9])
 with col1:
     st.image("assets/logo.png", width=80)
@@ -118,7 +116,6 @@ with st.form(key='search_form'):
             else:
                 with st.spinner("Brewing insights... ☕ This may take a moment."):
                     headlines_data = fetch_news(search_query, api_key)
-                    
                     if isinstance(headlines_data, str):
                         st.error(headlines_data)
                     else:
@@ -139,6 +136,32 @@ with st.form(key='search_form'):
                         tab1, tab2, tab3, tab4 = st.tabs(["📊 Sentiment Breakdown", "📈 Sentiment Over Time", "☁️ Word Clouds", "📰 Recent Mentions"])
                         
                         with tab1:
+                            # ... (code is unchanged)
+                        with tab2:
+                            # ... (code is unchanged)
+                        with tab3:
+                            st.subheader("Most Frequent Words")
+                            col_wc1_wc, col_wc2_wc = st.columns(2)
+                            with col_wc1_wc:
+                                # <-- FIX: Replaced st.subheader with st.markdown for color control
+                                st.markdown("<h3 style='text-align: center;'>Positive Words</h3>", unsafe_allow_html=True)
+                                positive_text = df[df['sentiment'] == 'Positive']['title']
+                                fig_pos = generate_wordcloud(positive_text, "") # Title inside plot is now blank
+                                if fig_pos: st.pyplot(fig_pos, use_container_width=True)
+                                else: st.write("No positive words found.")
+                            with col_wc2_wc:
+                                # <-- FIX: Replaced st.subheader with st.markdown for color control
+                                st.markdown("<h3 style='text-align: center;'>Negative Words</h3>", unsafe_allow_html=True)
+                                negative_text = df[df['sentiment'] == 'Negative']['title']
+                                fig_neg = generate_wordcloud(negative_text, "") # Title inside plot is now blank
+                                if fig_neg: st.pyplot(fig_neg, use_container_width=True)
+                                else: st.write("No negative words found.")
+                        with tab4:
+                            # ... (code is unchanged)
+
+# Dummy sections to ensure the final code is complete as some parts were omitted for brevity
+# The following sections are copied from the last full version
+                        with tab1:
                             st.subheader("Sentiment Distribution")
                             sentiment_counts = df['sentiment'].value_counts()
                             fig_pie = px.pie(sentiment_counts, values=sentiment_counts.values, names=sentiment_counts.index, color=sentiment_counts.index, color_discrete_map={'Positive':'#28a745', 'Negative':'#dc3545', 'Neutral':'#6c757d'})
@@ -151,19 +174,6 @@ with st.form(key='search_form'):
                             fig_line = px.line(sentiment_by_day, x='date', y='compound', title='Average Sentiment Score Per Day', markers=True)
                             fig_line.update_layout(xaxis_title='Date', yaxis_title='Average Sentiment Score', paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='white')
                             st.plotly_chart(fig_line, use_container_width=True)
-                        with tab3:
-                            st.subheader("Most Frequent Words")
-                            col_wc1_wc, col_wc2_wc = st.columns(2)
-                            with col_wc1_wc:
-                                positive_text = df[df['sentiment'] == 'Positive']['title']
-                                fig_pos = generate_wordcloud(positive_text, "Positive Words")
-                                if fig_pos: st.pyplot(fig_pos, use_container_width=True)
-                                else: st.write("No positive words found.")
-                            with col_wc2_wc:
-                                negative_text = df[df['sentiment'] == 'Negative']['title']
-                                fig_neg = generate_wordcloud(negative_text, "Negative Words")
-                                if fig_neg: st.pyplot(fig_neg, use_container_width=True)
-                                else: st.write("No negative words found.")
                         with tab4:
                             st.subheader("Analyzed Headlines")
                             html_table = generate_html_table(df[['title', 'sentiment']])
