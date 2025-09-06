@@ -47,10 +47,11 @@ def generate_wordcloud(text_series, title):
     """Generates and displays a word cloud with a transparent background."""
     text = ' '.join(text for text in text_series)
     if not text: return None
-    wordcloud = WordCloud(width=800, height=400, background_color=None, mode="RGBA", colormap='viridis').generate(text)
+    # --- THIS IS THE KEY CHANGE ---
+    wordcloud = WordCloud(width=800, height=400, background_color=None, mode="RGBA", colormap='viridis', color_func=lambda *args, **kwargs: "white").generate(text)
     fig, ax = plt.subplots()
     ax.imshow(wordcloud, interpolation='bilinear')
-    ax.set_title(title, fontsize=20)
+    ax.set_title(title, fontsize=20, color='white') # Also ensure title color is white
     ax.axis('off')
     fig.patch.set_alpha(0.0)
     return fig
@@ -76,7 +77,7 @@ st.sidebar.markdown("---")
 st.sidebar.subheader("How It Works")
 st.sidebar.info("This dashboard performs real-time sentiment analysis on news headlines, visualizing trends and public perception for any topic.")
 
-# <-- NEW: Data Source & Accuracy section ---
+# --- Data Source & Accuracy section ---
 with st.sidebar.expander("ℹ️ Data Source & Accuracy"):
     st.markdown("""
         - **Data Source:** News headlines are fetched in real-time from [NewsAPI.org](https://newsapi.org/), a service that provides access to articles from a wide range of global publications.
@@ -88,10 +89,10 @@ if st.sidebar.button('Clear Cache'):
     st.cache_data.clear()
     st.success("Cache cleared!")
 st.sidebar.markdown("---")
-st.sidebar.write("Built with passion by Saikat Mondal.")
+st.sidebar.write("Built with passion by Saikat.")
 
 # --- Main Page ---
-# <-- NEW: Improved Header with Logo ---
+# --- Improved Header with Logo ---
 col1, col2 = st.columns([0.1, 0.9])
 with col1:
     st.image("assets/logo.png", width=80)
@@ -101,7 +102,6 @@ st.markdown("Analyze public sentiment and track trends for any topic. Enter a qu
 
 # --- Input Section ---
 with st.form(key='search_form'):
-    # <-- NEW: Placeholder examples ---
     search_query = st.text_input(
         "Enter a brand, topic, or keyword", 
         placeholder="e.g., Apple, Climate Change, The latest Marvel movie"
@@ -116,7 +116,6 @@ with st.form(key='search_form'):
             if not api_key:
                 st.error("News API key is not configured. Please contact the app administrator.")
             else:
-                # <-- Already includes a loading indicator! ---
                 with st.spinner("Brewing insights... ☕ This may take a moment."):
                     headlines_data = fetch_news(search_query, api_key)
                     
@@ -128,10 +127,10 @@ with st.form(key='search_form'):
                         st.success(f"Analysis complete! Found {len(df)} articles.")
                         st.markdown("---")
                         
-                        # (The rest of the dashboard display code is the same)
                         total_headlines = len(df)
                         overall_sentiment_score = df['compound'].mean()
                         sentiment_label = "Positive" if overall_sentiment_score >= 0.05 else "Negative" if overall_sentiment_score <= -0.05 else "Neutral"
+                        
                         col1_metric, col2_metric, col3_metric = st.columns(3)
                         col1_metric.metric("📰 Total Headlines", f"{total_headlines}")
                         col2_metric.metric("🧠 Overall Sentiment", sentiment_label)
