@@ -65,6 +65,64 @@ with st.sidebar.expander("ℹ️ About & Data Source", expanded=True):
         - **Data:** Real-time headlines from [NewsAPI.org](https://newsapi.org).
         - **Model:** VADER Sentiment Analysis.
     """)
+
+with st.sidebar.expander("🤖 Agentic Workflow Breakdown", expanded=False):
+    st.markdown('''
+---
+
+### 🧩 Agent Breakdown
+
+#### 🟡 Agent A: User Input
+- Captures ASIN, vendor name, or topic from the user
+- Triggers downstream agents with structured parameters
+
+#### 🔵 Agent B: Amazon API Agent
+- Fetches product metadata and reviews using RapidAPI
+- Returns: `{"title": ..., "reviews": [...]}`
+
+#### 🟠 Agent C: Review Cleaner Agent
+- Removes noise, filters empty reviews, deduplicates
+- Optional: Language detection, translation, profanity masking
+
+#### 🟢 Agent D: Sentiment Agent
+- Applies VADER or transformer-based sentiment scoring
+- Returns: `DataFrame` with compound scores and sentiment labels
+
+#### 🟣 Agent E: Wordcloud + Metrics Agent
+- Generates visualizations: pie chart, histogram, word cloud
+- Computes metrics: average score, polarity distribution
+
+#### 🟤 Agent F: Streamlit UI Agent
+- Renders results in tabs, metrics, and download options
+- Handles user feedback, retry logic, and caching
+
+---
+
+### 🧠 How to Build It
+
+#### ✅ Modular Python Functions
+Create separate files:
+- `amazon_api.py` → `fetch_amazon_product(asin)`
+- `review_cleaner.py` → `clean_reviews(reviews)`
+- `sentiment.py` → `analyze_sentiment(texts)`
+- `visualizer.py` → `generate_wordcloud(df)`, `plot_metrics(df)`
+
+#### ✅ LangChain Agent Orchestration (Optional)
+Use LangChain’s `Tool`, `AgentExecutor`, and `ConversationBufferMemory`:
+```python
+from langchain.agents import initialize_agent, Tool
+from langchain.llms import OpenAI
+
+tools = [
+    Tool(name="AmazonFetcher", func=fetch_amazon_product, description="Fetch Amazon product reviews"),
+    Tool(name="SentimentAnalyzer", func=analyze_sentiment, description="Analyze sentiment of reviews"),
+]
+
+agent = initialize_agent(tools, llm=OpenAI(), agent="zero-shot-react-description", verbose=True)
+agent.run("Analyze reviews for ASIN B08N5WRWNW")
+```
+''')
+
 if st.sidebar.button('Clear Cache'):
     st.cache_data.clear()
     st.success("Cache cleared!")

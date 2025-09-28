@@ -1,73 +1,62 @@
-# 📈 Real-Time Sentiment Analysis Dashboard: Agentic AI
+# 📈 TrendTrackr: An Agentic AI-Powered Dashboard
 
-![Streamlit App](https://sentiment-analysis-agent-vfwc6va3wnvgqquitfkp5s.streamlit.app)
+[![Streamlit App](https://sentiment-analysis-agent-vfwc6va3wnvgqquitfkp5s.streamlit.app)](https://sentiment-analysis-agent-vfwc6va3wnvgqquitfkp5s.streamlit.app)
 
-A web-based dashboard that fetches recent news headlines for any user-provided query, performs sentiment analysis, and visualizes the results and historical trends in a clean, interactive, and mobile-friendly interface.
+A sophisticated, AI-powered dashboard that demonstrates agent-to-agent communication and multi-component pipeline (MCP) design. The application analyzes sentiment from real-time news and Amazon product reviews, and includes interactive research modules on advanced tech topics.
 
 ---
 
-### **Live Demo**
+## 🤖 Agentic AI Architecture
 
-![Image](https://github.com/user-attachments/assets/d223b94f-ca05-45e2-a12e-5001a5257f5e)
+This application is built using a modular, agentic design pattern. The main `Home.py` script acts as an **Orchestrator**, which calls a series of specialized **Tools** (agents) to perform specific tasks. This approach, known as a Multi-Component Pipeline (MCP), makes the system more robust, maintainable, and scalable.
+
+### Agent-to-Agent (A2A) Workflow
+
+When a user initiates an analysis, the Orchestrator executes a pipeline, with the output of one agent becoming the input for the next. This flow is made visible in the UI using `st.status` to show which agent is currently active.
+
+Here is the workflow for an Amazon Review Analysis:
+
+```mermaid
+graph TD
+    A[User Input: ASIN] --> B{🤖 Orchestrator};
+    B --> C[🔍 API Agent: tool_fetch_amazon_product];
+    C --> D[🧠 Sentiment Agent: tool_analyze_sentiment];
+    D --> E[☁️ Visualization Agent: tool_generate_wordcloud];
+    E --> F[📊 UI: Display Results];
+```
+
+1.  **User Input:** The user provides an Amazon ASIN.
+2.  **Orchestrator (`Home.py`):** Receives the request and begins the pipeline.
+3.  **API Agent (`tool_fetch_amazon_product`):** Called by the orchestrator to fetch the product title and reviews from an external API.
+4.  **Sentiment Agent (`tool_analyze_sentiment`):** Receives the reviews from the API Agent and performs sentiment analysis on the text.
+5.  **Visualization Agent (`tool_generate_wordcloud`):** Receives the analyzed data and generates a word cloud image.
+6.  **UI (`Home.py`):** The orchestrator displays the final results (dataframes, charts, images) in the Streamlit interface.
 
 ---
 
 ## ✨ Features
 
--   **Multi-Page Application**: Structured for easy navigation between different analysis modules (e.g., Real-Time News Sentiment, Amazon/G2 Reviews).
--   **Dynamic Data Fetching**: Utilizes the NewsAPI to pull the latest 100 headlines for any topic.
--   **Advanced Sentiment Analysis**: Employs the VADER model to classify headlines as Positive, Negative, or Neutral.
--   **Time-Series Analysis**: Plots the average sentiment score per day on an interactive line chart to reveal trends over time.
--   **Efficient Caching**: Implemented `@st.cache_data` to cache API results for one hour, with a manual "Clear Cache" button for data freshness.
--   **Interactive Dashboard**: A polished UI with a custom theme (light/dark mode supported), organized into clear tabs for an intuitive user experience.
--   **Data Export**: Allows users to download the full analysis results as a CSV file.
--   **Rich Visualizations**:
-    -   Custom-styled metric cards for key insights (Total Headlines, Overall Sentiment, Average Score).
-    -   An interactive pie chart for sentiment distribution.
-    -   Insightful word clouds for positive and negative keywords.
-    -   A custom-styled, scrollable HTML table for detailed results.
--   **User-Friendly Interface**: Includes a professional header with a logo, placeholder examples, and responds to the "Enter" key for submission.
+-   **Visible Agentic Workflow**: The UI uses an animated status box to show the active agent at each step of the analysis pipeline (e.g., `API Agent`, `Sentiment Agent`).
+-   **Multi-Component Pipeline (MCP) Design**: The code is refactored into a clear "Orchestrator" and "Tools" structure, demonstrating a robust and scalable software pattern.
+-   **Real-Time News Sentiment Analysis**: Fetches and analyzes the latest news headlines for any topic.
+-   **Amazon Product Review Analysis**: Fetches and analyzes user reviews for any Amazon product ASIN.
+-   **Interactive Research Modules**:
+    -   **RDMA Simulation**: An interactive module that visually contrasts traditional TCP/IP data transfers with high-speed RDMA, demonstrating the concepts of kernel bypass and zero-copy for AI training.
+    -   **CDN Paywall Simulation**: A simulation of Cloudflare's "Pay Per Crawl" mechanism, allowing users to experiment with different AI crawler bids.
+-   **Advanced Sentiment Analysis**: Employs the VADER model to classify text as Positive, Negative, or Neutral.
+-   **Rich Visualizations**: Generates interactive charts and word clouds to display results.
+-   **Efficient Caching**: Uses Streamlit's caching to optimize performance and avoid redundant API calls.
 
 ---
 
 ## 🛠️ Tech Stack
 
 -   **Framework**: Streamlit
--   **Data Source**: NewsAPI.org
--   **Sentiment Analysis**: VADER (Valence Aware Dictionary and sEntiment Reasoner)
+-   **Architecture**: Agent-to-Agent (A2A), Multi-Component Pipeline (MCP)
+-   **Data Sources**: NewsAPI.org, RapidAPI (for Amazon data)
+-   **Sentiment Analysis**: VADER
 -   **Visualizations**: Plotly Express, WordCloud, Matplotlib
--   **Core Libraries**: Pandas
-
----
-
-## 🧠 Challenges & Solutions
-
-Developing this application presented a significant environmental challenge that required deep troubleshooting and creative problem-solving.
-
-**The Problem:** A persistent and critical `ImportError: DLL load failed` originating from the `pyarrow` library. This error crashed the application whenever a DataFrame was displayed.
-
-**The Solution:**
-1.  **Initial Troubleshooting:** Standard debugging steps, such as reinstalling libraries and creating a new virtual environment, were unsuccessful.
-2.  **System-Level Fixes:** The investigation led to installing system-wide dependencies like the Microsoft C++ Redistributable.
-3.  **Python Versioning:** To rule out version conflicts, the entire project was migrated from Python 3.12 to the more stable Python 3.11 in a completely new, isolated environment.
-4.  **The Final Workaround:** When the error surprisingly persisted, it confirmed a deep, unusual incompatibility with the local system. I engineered a robust solution by creating a **custom HTML table renderer**. This function dynamically generates a styled HTML table from the pandas DataFrame and displays it within a scrollable `div`. This creative workaround completely bypassed the problematic `pyarrow` dependency, restoring full functionality and a polished look to the dashboard.
-
-This experience was a valuable lesson in debugging complex environment issues and the importance of having alternative implementation strategies to ensure project delivery.
-
----
-
-### ## 💡 Known Limitations & Future Improvements
-
-**Relevance Filtering:**
-The current version uses a keyword-based search via the NewsAPI. This can sometimes lead to irrelevant results (e.g., searching for "Apple" the company may return articles about the fruit).
-
-To create a truly state-of-the-art relevance filter, the next step would be to implement a **sentence embedding model** (like Sentence-BERT). This advanced process would involve:
-1.  Fetching a broad set of articles from the API.
-2.  Generating vector embeddings for the user's query and for each headline.
-3.  Calculating the cosine similarity between the query and each headline.
-4.  Displaying only the top results with the highest similarity scores, ensuring a much higher degree of contextual relevance.
-
-This feature was scoped out of the current project to focus on the core dashboard requirements but represents a clear path for future enhancement.
+-   **Core Libraries**: Pandas, Requests
 
 ---
 
@@ -75,15 +64,14 @@ This feature was scoped out of the current project to focus on the core dashboar
 
 1.  **Clone the Repository**
     ```bash
-    git clone [https://github.com/CoderSaikat345/sentiment-analysis-dashboard.git](https://github.com/CoderSaikat345/sentiment-analysis-dashboard.git)
-    cd sentiment-analysis-dashboard
+    git clone <your-repo-url>
+    cd sentiment-analysis-agent
     ```
 
 2.  **Create and Activate a Virtual Environment**
-    *We recommend using Python 3.11 for maximum compatibility.*
     ```bash
-    py -3.11 -m venv venv
-    venv\Scripts\activate
+    python -m venv venv
+    source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
     ```
 
 3.  **Install Dependencies**
@@ -91,12 +79,12 @@ This feature was scoped out of the current project to focus on the core dashboar
     pip install -r requirements.txt
     ```
 
-4.  **Set Up Your API Key**
-    - Get a free API key from [newsapi.org](https://newsapi.org/).
-    - This project is designed to be deployed on Streamlit Community Cloud, where the API key should be stored in the Secrets manager.
-    - For local development, create a `.streamlit/secrets.toml` file in your project root and add your API key:
+4.  **Set Up Your API Keys**
+    - Create a file at `.streamlit/secrets.toml`.
+    - Add your API keys to this file:
       ```toml
-      NEWS_API_KEY = "your_news_api_key_here"
+      NEWS_API_KEY = "your_news_api_key"
+      RAPIDAPI_KEY = "your_rapidapi_key"
       ```
 
 5.  **Run the Application**
@@ -115,4 +103,3 @@ Feel free to connect with me and follow my work:
 🔗 [LinkedIn Profile](https://www.linkedin.com/in/shivapunit/)
 
 ---
-
