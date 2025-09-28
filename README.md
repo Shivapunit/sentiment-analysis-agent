@@ -14,6 +14,7 @@ A web-based dashboard that fetches recent news headlines for any user-provided q
 
 ## ✨ Features
 
+-   **Multi-Page Application**: Structured for easy navigation between different analysis modules (e.g., Real-Time News Sentiment, Amazon/G2 Reviews).
 -   **Dynamic Data Fetching**: Utilizes the NewsAPI to pull the latest 100 headlines for any topic.
 -   **Advanced Sentiment Analysis**: Employs the VADER model to classify headlines as Positive, Negative, or Neutral.
 -   **Time-Series Analysis**: Plots the average sentiment score per day on an interactive line chart to reveal trends over time.
@@ -93,11 +94,24 @@ This feature was scoped out of the current project to focus on the core dashboar
 4.  **Set Up Your API Key**
     - Get a free API key from [newsapi.org](https://newsapi.org/).
     - This project is designed to be deployed on Streamlit Community Cloud, where the API key should be stored in the Secrets manager.
+    - For local development, create a `.streamlit/secrets.toml` file in your project root and add your API key:
+      ```toml
+      NEWS_API_KEY = "your_news_api_key_here"
+      ```
 
 5.  **Run the Application**
     ```bash
-    streamlit run sapp.py
+    streamlit run Home.py
     ```
 The application will now be running and accessible at `http://localhost:8501`.
 
+---
 
+## 👨‍💻 About the Creator
+
+This project was developed by **Shivakant Dubey**.
+
+Feel free to connect with me and follow my work:
+🔗 [LinkedIn Profile](https://www.linkedin.com/in/shivapunit/)
+
+---
