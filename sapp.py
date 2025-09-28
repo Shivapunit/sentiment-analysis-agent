@@ -8,7 +8,7 @@ from newsapi import NewsApiClient
 
 # --- Page Configuration ---
 st.set_page_config(
-    page_title="TrendTrackr - Sentiment Dashboard",
+    page_title="Real-Time Sentiment Analysis - Sentiment Dashboard",
     page_icon="🧠",
     layout="wide",
     initial_sidebar_state="expanded"
