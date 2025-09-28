@@ -37,7 +37,7 @@ def analyze_sentiment(df):
 def generate_wordcloud(text_series):
     text = ' '.join(text_series)
     if not text: return None
-    wc = WordCloud(width=800, height=400, background_color=None, mode="RGBA", colormap='viridis').generate(text)
+    wc = WordCloud(width=800, height=400, background_color='white', colormap='plasma').generate(text)
     fig, ax = plt.subplots()
     ax.imshow(wc, interpolation='bilinear')
     ax.axis('off')
@@ -45,8 +45,8 @@ def generate_wordcloud(text_series):
     return fig
 
 def generate_html_table(df):
-    colors = {'Positive': '#28a745', 'Negative': '#dc3545', 'Neutral': 'grey'}
-    html = """<style>.styled-table{width:100%;border-collapse:collapse;}.styled-table th,.styled-table td{padding:12px 15px;text-align:left;}.styled-table th{background-color:#1C355A;color:#FFFFFF;border-bottom:2px solid #61dafb;}.styled-table tr{border-bottom:1px solid #1C355A;}</style><table class="styled-table"><thead><tr><th>Title</th><th>Sentiment</th></tr></thead><tbody>"""
+    colors = {'Positive': '#2ecc71', 'Negative': '#e74c3c', 'Neutral': '#95a5a6'}
+    html = """<style>.styled-table{width:100%;border-collapse:collapse;font-family:Arial;}.styled-table th,.styled-table td{padding:10px;text-align:left;}.styled-table th{background-color:#34495e;color:#ecf0f1;}.styled-table tr{border-bottom:1px solid #bdc3c7;}</style><table class="styled-table"><thead><tr><th>Title</th><th>Sentiment</th></tr></thead><tbody>"""
     for _, row in df.iterrows():
         html += f"<tr><td>{row['title']}</td><td style='color:{colors[row['sentiment']]};font-weight:bold;'>{row['sentiment']}</td></tr>"
     html += "</tbody></table>"
@@ -91,24 +91,25 @@ with st.form(key='search_form'):
     search_query = st.text_input("Search Query", value=default_query, placeholder="e.g., Apple, Climate Change, The latest Marvel movie")
     submitted = st.form_submit_button("Analyze Sentiment")
 
+# --- API Key Retrieval with Fallback ---
+api_key = st.secrets.get("NEWS_API_KEY", "0ac47642d2d8408e9bf075473df6cbc7")
+if api_key == "0ac47642d2d8408e9bf075473df6cbc7":
+    st.warning("Using fallback API key. Consider configuring secrets for security.")
+
 # --- Sentiment Analysis ---
 if submitted:
     if not search_query:
         st.warning("Please enter a search query.")
     else:
-        api_key = st.secrets.get("NEWS_API_KEY")
-        if not api_key:
-            st.error("Missing NewsAPI key. Please configure it in Streamlit secrets.")
-        else:
-            with st.spinner("Brewing insights... ☕"):
-                try:
-                    articles = fetch_news(search_query, api_key)
-                    df = pd.DataFrame(articles)
-                    df = analyze_sentiment(df)
-                    st.session_state['results_df'] = df
-                    st.session_state['search_query'] = search_query
-                except Exception as e:
-                    st.error(str(e))
+        with st.spinner("Brewing insights... ☕"):
+            try:
+                articles = fetch_news(search_query, api_key)
+                df = pd.DataFrame(articles)
+                df = analyze_sentiment(df)
+                st.session_state['results_df'] = df
+                st.session_state['search_query'] = search_query
+            except Exception as e:
+                st.error(str(e))
 
 # --- Dashboard Display ---
 if 'results_df' in st.session_state:
@@ -137,8 +138,8 @@ if 'results_df' in st.session_state:
         sentiment_counts = df['sentiment'].value_counts()
         fig_pie = px.pie(sentiment_counts, values=sentiment_counts.values, names=sentiment_counts.index,
                          color=sentiment_counts.index,
-                         color_discrete_map={'Positive': '#28a745', 'Negative': '#dc3545', 'Neutral': '#6c757d'})
-        fig_pie.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+                         color_discrete_map={'Positive': '#2ecc71', 'Negative': '#e74c3c', 'Neutral': '#95a5a6'})
+        fig_pie.update_layout(paper_bgcolor='white', plot_bgcolor='white')
         st.plotly_chart(fig_pie, use_container_width=True)
 
     with tab2:
@@ -147,7 +148,7 @@ if 'results_df' in st.session_state:
         sentiment_by_day = df.groupby('date')['compound'].mean().reset_index()
         fig_line = px.line(sentiment_by_day, x='date', y='compound', markers=True)
         fig_line.update_layout(xaxis_title='Date', yaxis_title='Avg. Sentiment Score',
-                               paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+                               paper_bgcolor='white', plot_bgcolor='white')
         st.plotly_chart(fig_line, use_container_width=True)
 
     with tab3:
