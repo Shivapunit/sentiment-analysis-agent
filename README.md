@@ -1,4 +1,4 @@
-# 📈 TrendTrackr: Real-Time Sentiment Analysis Dashboard
+# 📈 Real-Time Sentiment Analysis Dashboard: Agentic AI
 
 [![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://sentiment-analysis-dashboard-awaqv9nugudltikqkdwikg.streamlit.app/)
 
@@ -99,3 +99,4 @@ This feature was scoped out of the current project to focus on the core dashboar
     streamlit run sapp.py
     ```
 The application will now be running and accessible at `http://localhost:8501`.
+
