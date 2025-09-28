@@ -1,6 +1,6 @@
 # 📈 Real-Time Sentiment Analysis Dashboard: Agentic AI
 
-[![Streamlit App](https://sentiment-analysis-agent-vfwc6va3wnvgqquitfkp5s.streamlit.app)
+![Streamlit App](https://sentiment-analysis-agent-vfwc6va3wnvgqquitfkp5s.streamlit.app)
 
 A web-based dashboard that fetches recent news headlines for any user-provided query, performs sentiment analysis, and visualizes the results and historical trends in a clean, interactive, and mobile-friendly interface.
 
@@ -115,3 +115,4 @@ Feel free to connect with me and follow my work:
 🔗 [LinkedIn Profile](https://www.linkedin.com/in/shivapunit/)
 
 ---
+
