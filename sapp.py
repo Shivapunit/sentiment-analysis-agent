@@ -23,7 +23,10 @@ def fetch_news(query, api_key):
     newsapi = NewsApiClient(api_key=api_key)
     try:
         all_articles = newsapi.get_everything(q=query, language='en', sort_by='relevancy', page_size=100)
-        return [{'title': a['title'], 'publishedAt': a['publishedAt']} for a in all_articles['articles']]
+        articles = all_articles.get('articles', [])
+        if not articles:
+            return None
+        return [{'title': a.get('title', ''), 'publishedAt': a.get('publishedAt', '')} for a in articles if a.get('title')]
     except Exception as e:
         raise RuntimeError(f"NewsAPI error: {e}")
 
@@ -104,10 +107,13 @@ if submitted:
         with st.spinner("Brewing insights... ☕"):
             try:
                 articles = fetch_news(search_query, api_key)
-                df = pd.DataFrame(articles)
-                df = analyze_sentiment(df)
-                st.session_state['results_df'] = df
-                st.session_state['search_query'] = search_query
+                if not articles:
+                    st.warning("No articles found for this query. Try a different topic.")
+                else:
+                    df = pd.DataFrame(articles)
+                    df = analyze_sentiment(df)
+                    st.session_state['results_df'] = df
+                    st.session_state['search_query'] = search_query
             except Exception as e:
                 st.error(str(e))
 
