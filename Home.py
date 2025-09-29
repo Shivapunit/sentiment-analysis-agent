@@ -13,13 +13,12 @@ st.set_page_config(page_title="TrendTrackr", page_icon="🧠", layout="wide")
 
 # --- Sidebar ---
 st.sidebar.header("📈 TrendTrackr")
-st.sidebar.caption("Tracking trends, decoding sentiment.")
+st.sidebar.caption("AI-Powered Dashboard")
 st.sidebar.markdown("---")
 with st.sidebar.expander("ℹ️ About & Data Source", expanded=True):
     st.markdown("""
-        - **News Sentiment:** Headlines from [NewsAPI.org](https://newsapi.org)
-        - **Amazon Reviews:** Product data via RapidAPI
-        - **G2 Vendors:** B2B software autocomplete via RapidAPI
+        - **News Sentiment:** Live data from [NewsAPI.org](https://newsapi.org)
+        - **Amazon & G2 Reviews:** Mock data for demonstration
         - **Model:** VADER Sentiment Analysis
     """)
 st.sidebar.markdown("---")
@@ -33,12 +32,9 @@ st.sidebar.markdown(
     unsafe_allow_html=True
 )
 
-# --- API & Sentiment Setup ---
+# --- Core Functions / Tools ---
 analyzer = SentimentIntensityAnalyzer()
-NEWS_API_KEY = st.secrets.get("NEWS_API_KEY", "0ac47642d2d8408e9bf075473df6cbc7")
-RAPIDAPI_KEY = st.secrets.get("RAPIDAPI_KEY", "b5add04a2amsh97b53fc17139a3ep11f058jsn6a762af25aea")
 
-# --- Shared Functions ---
 @st.cache_data(ttl=3600)
 def analyze_sentiment(texts):
     df = pd.DataFrame(texts, columns=["text"])
@@ -47,49 +43,34 @@ def analyze_sentiment(texts):
     return df
 
 @st.cache_data(ttl=3600)
-def generate_wordcloud(text_series):
-    text = ' '.join(text_series)
-    if not text: return None
-    wc = WordCloud(width=800, height=400, background_color='white', colormap='plasma').generate(text)
-    fig, ax = plt.subplots()
-    ax.imshow(wc, interpolation='bilinear')
-    ax.axis('off')
-    return fig
+def generate_wordcloud(text_series, colormap='plasma'):
+    text = ' '.join(text for text in text_series if text and isinstance(text, str))
+    if not text:
+        return None
+    wc = WordCloud(width=1200, height=600, background_color='white', colormap=colormap, max_words=150, contour_width=3, contour_color='steelblue').generate(text)
+    return wc
 
 @st.cache_data(ttl=3600)
 def fetch_news(query):
-    newsapi = NewsApiClient(api_key=NEWS_API_KEY)
+    api_key = st.secrets.get("NEWS_API_KEY", "0ac47642d2d8408e9bf075473df6cbc7")
+    newsapi = NewsApiClient(api_key=api_key)
     try:
         articles = newsapi.get_everything(q=query, language='en', sort_by='relevancy', page_size=100).get('articles', [])
-        return [{'title': a.get('title', ''), 'publishedAt': a.get('publishedAt', '')} for a in articles if a.get('title')]
-    except Exception as e:
-        return {"error": str(e)}
-
-@st.cache_data(ttl=3600)
-def fetch_amazon_product(asin, country="US"):
-    url = "https://real-time-amazon-data.p.rapidapi.com/product-details"
-    headers = {"x-rapidapi-host": "real-time-amazon-data.p.rapidapi.com", "x-rapidapi-key": RAPIDAPI_KEY}
-    params = {"asin": asin, "country": country}
-    try:
-        response = requests.get(url, headers=headers, params=params)
-        response.raise_for_status()
-        data = response.json().get("data", {})
-        return {
-            "title": data.get("product_title", ""),
-            "reviews": [r.get("review_text", "") for r in data.get("product_reviews", {}).get("reviews", [])]
-        }
+        return articles
     except Exception as e:
         return {"error": str(e)}
 
 # --- Main Dashboard UI ---
-st.title("📈 TrendTrackr: Unified Sentiment & Research Dashboard")
+st.title("📈 TrendTrackr: AI-Powered Dashboard")
 
-tab_news, tab_reviews, tab_research = st.tabs(["🧠 News Sentiment", "🛒 Amazon & G2 Reviews", "🔬 Research Projects"])
+tab_news, tab_reviews, tab_research = st.tabs(["🧠 News Sentiment", "🛒 Amazon & G2 Reviews (DEMO)", "🔬 Research Projects"])
 
+# --- News Sentiment Tab (Restored & Fixed) ---
 with tab_news:
     st.header("Analyze Public Sentiment from News Headlines")
+    
     providers = ["General", "AWS", "Azure", "Cloudflare", "Fastly", "Google Cloud"]
-    selected_provider = st.selectbox("Choose Provider", providers, key='news_provider_select')
+    selected_provider = st.selectbox("Choose a Provider (Optional)", providers, key='news_provider_select')
     default_query = selected_provider if selected_provider != "General" else ""
 
     with st.form(key='news_search_form'):
@@ -106,14 +87,14 @@ with tab_news:
             else:
                 df = pd.DataFrame(articles)
                 df["text"] = df["title"]
-                df_sentiment = analyze_sentiment(df[["text"]])
-                df["publishedAt"] = pd.to_datetime([a["publishedAt"] for a in articles])
-                df = pd.concat([df, df_sentiment], axis=1)
+                df_sentiment = analyze_sentiment(df["text"].dropna())
+                df = pd.concat([df.reset_index(drop=True), df_sentiment.reset_index(drop=True)], axis=1)
                 st.session_state['news_df'] = df
 
     if 'news_df' in st.session_state:
         df = st.session_state['news_df']
-        st.success(f"Found {len(df)} articles.")
+        st.success(f"**Analysis Complete:** Found {len(df)} articles.")
+        
         avg_score = df["compound"].mean()
         sentiment_label = "Positive" if avg_score >= 0.05 else "Negative" if avg_score <= -0.05 else "Neutral"
         col1, col2, col3 = st.columns(3)
@@ -121,28 +102,95 @@ with tab_news:
         col2.metric("💬 Overall Sentiment", sentiment_label)
         col3.metric("📈 Avg. Score", f"{avg_score:.2f}")
 
+        t1, t2, t3 = st.tabs(["📊 Distribution", "📈 Trend", "☁️ Word Cloud"])
+        with t1:
+            sentiment_counts = df["sentiment"].value_counts()
+            fig_pie = px.pie(sentiment_counts, values=sentiment_counts.values, names=sentiment_counts.index,
+                             color=sentiment_counts.index, color_discrete_map={'Positive': '#2ecc71', 'Negative': '#e74c3c', 'Neutral': '#95a5a6'})
+            st.plotly_chart(fig_pie, use_container_width=True)
+        with t2:
+            df["publishedAt"] = pd.to_datetime(df["publishedAt"])
+            df["date"] = df["publishedAt"].dt.date
+            sentiment_by_day = df.groupby("date")["compound"].mean().reset_index()
+            fig_line = px.line(sentiment_by_day, x="date", y="compound", markers=True, title='Sentiment Trend Over Time')
+            st.plotly_chart(fig_line, use_container_width=True)
+        with t3:
+            wordcloud = generate_wordcloud(df['text'])
+            if wordcloud:
+                st.image(wordcloud.to_array(), caption='Most Frequent Words', use_container_width=True)
+            else:
+                st.write("Not enough data to generate a word cloud.")
+
+# --- Amazon & G2 Reviews Tab (FIXED: Interactive Demo) ---
 with tab_reviews:
     st.header("Analyze Product and Vendor Reviews")
     sub_tab_amazon, sub_tab_g2 = st.tabs(["📦 Amazon Product Reviews", "🏢 G2 Vendor Search"])
 
     with sub_tab_amazon:
-        asin = st.text_input("Enter Amazon ASIN", value="B07ZPKBL9V", key='amazon_asin_input')
-        if st.button("Analyze Amazon Product", key='amazon_button'):
-            with st.spinner("Fetching Amazon reviews..."):
-                product = fetch_amazon_product(asin)
-                if "error" in product:
-                    st.error(product["error"])
-                else:
-                    st.write(f"**Product Title:** {product['title']}")
-                    if product['reviews']:
-                        df_reviews = analyze_sentiment(product['reviews'])
-                        st.dataframe(df_reviews)
-                        st.write("**Review Word Cloud:**")
-                        fig_wc = generate_wordcloud(df_reviews['text'])
-                        if fig_wc: st.pyplot(fig_wc)
-                    else:
-                        st.info("No reviews available for this product.")
+        st.subheader("Demo: Sentiment Analysis of a Smartwatch")
+        if st.button("Run Amazon Review Analysis", key='amazon_button'):
+            mock_reviews = [
+                "Absolutely love it! The battery life is incredible and it tracks my workouts perfectly.",
+                "A total waste of money. The screen scratched on the first day and it constantly disconnects from my phone.",
+                "It's an okay watch. Does the basics but nothing special. The interface is a bit clunky.",
+                "Best tech purchase of the year! Seamless integration with all my apps.",
+                "I had to return it. The heart rate monitor was wildly inaccurate.",
+                "The design is sleek and I get a lot of compliments on it.",
+                "The software is buggy and the updates are infrequent. Disappointed.",
+                "Five stars! Finally a smartwatch that delivers on its promises.",
+                "Terrible customer support when I had an issue with the charger.",
+                "It works as advertised, no complaints from me."
+            ]
+            with st.spinner("Analyzing mock reviews..."):
+                df_reviews = analyze_sentiment(mock_reviews)
+                st.session_state['amazon_df'] = df_reviews
 
+        if 'amazon_df' in st.session_state:
+            df = st.session_state['amazon_df']
+            st.subheader("Analysis Results for 'The Innovate Smartwatch Series X'")
+            avg_score = df['compound'].mean()
+            sentiment_label = "Positive" if avg_score >= 0.05 else "Negative" if avg_score <= -0.05 else "Neutral"
+            col1, col2, col3 = st.columns(3)
+            col1.metric("⭐ Overall Sentiment", sentiment_label)
+            col2.metric("📊 Average Score", f"{avg_score:.2f}")
+            col3.metric("💬 Reviews Analyzed", len(df))
+            col_pie, col_wc = st.columns(2)
+            with col_pie:
+                st.markdown("**Sentiment Distribution**")
+                sentiment_counts = df['sentiment'].value_counts()
+                fig_pie = px.pie(sentiment_counts, values=sentiment_counts.values, names=sentiment_counts.index, color=sentiment_counts.index, color_discrete_map={'Positive': '#2ecc71', 'Negative': '#e74c3c', 'Neutral': '#95a5a6'})
+                st.plotly_chart(fig_pie, use_container_width=True)
+            with col_wc:
+                st.markdown("**Positive vs. Negative Keywords**")
+                pos_text = ' '.join(df[df['sentiment'] == 'Positive']['text'])
+                neg_text = ' '.join(df[df['sentiment'] == 'Negative']['text'])
+                if pos_text:
+                    st.image(generate_wordcloud(pos_text, colormap='Greens').to_array(), caption='Positive Words', use_container_width=True)
+                if neg_text:
+                    st.image(generate_wordcloud(neg_text, colormap='Reds').to_array(), caption='Negative Words', use_container_width=True)
+            st.markdown("**Detailed Review Analysis**")
+            st.dataframe(df)
+
+    with sub_tab_g2:
+        st.subheader("Demo: G2 Vendor Search")
+        if st.button("Run G2 Vendor Search", key='g2_button'):
+            mock_vendors = [
+                {"name": "ConnectSphere CRM", "category": "CRM", "score": 4.7, "description": "An all-in-one CRM platform for growing businesses.", "icon": "🌐"},
+                {"name": "SalesLeap", "category": "Sales Intelligence", "score": 4.5, "description": "Provides actionable B2B contact and company data.", "icon": "🚀"},
+                {"name": "Supportify Desk", "category": "Help Desk Software", "score": 4.6, "description": "Streamlines customer support with a unified inbox.", "icon": "🎧"}
+            ]
+            st.session_state['g2_vendors'] = mock_vendors
+
+        if 'g2_vendors' in st.session_state:
+            st.markdown("**Matching Vendors Found:**")
+            for vendor in st.session_state['g2_vendors']:
+                with st.container():
+                    st.markdown(f"### {vendor['icon']} {vendor['name']}")
+                    st.markdown(f"**Category:** {vendor['category']} | **G2 Score:** {vendor['score']}/5.0")
+                    st.write(vendor['description'])
+                    st.markdown("---")
+
+# --- Research Projects Tab (Restored & Fixed) ---
 with tab_research:
     st.header("Research Projects & Simulations")
     sub_tab_rdma, sub_tab_cdn = st.tabs(["RDMA for AI Training", "CDN Paywall Analysis"])
@@ -150,9 +198,7 @@ with tab_research:
     with sub_tab_rdma:
         st.subheader("Interactive Simulation: TCP/IP vs. RDMA")
         st.markdown("Simulate a gradient synchronization step in distributed AI training to see the performance difference.")
-
         gradient_size_mb = st.slider("Gradient Size (MB) to Synchronize", 16, 1024, 128, key='rdma_slider')
-
         if st.button("▶️ Run Simulation", key='rdma_button'):
             network_speed_gbps = 100
             tcp_latency_us = 50
@@ -160,7 +206,6 @@ with tab_research:
             tcp_cpu_overhead_ms = gradient_size_mb * 0.1
             rdma_cpu_overhead_ms = gradient_size_mb * 0.01
             transfer_time_s = (gradient_size_mb * 8) / (network_speed_gbps * 1000)
-
             col1, col2 = st.columns(2)
             with col1:
                 st.markdown("#### Traditional TCP/IP Path")
@@ -169,7 +214,6 @@ with tab_research:
                 st.info(f"**Estimated Time:** `{((transfer_time_s * 1000) + (tcp_latency_us / 1000)):.2f} ms`")
                 st.warning(f"**CPU Overhead:** `{tcp_cpu_overhead_ms:.2f} ms` (High)")
                 st.error("**Data Copies:** 2 (Inefficient)")
-
             with col2:
                 st.markdown("#### High-Speed RDMA Path")
                 st.markdown("--- ")
@@ -179,20 +223,10 @@ with tab_research:
                 st.success(f"**CPU Overhead:** `{rdma_cpu_overhead_ms:.2f} ms` (Minimal)")
                 st.success("**Data Copies:** 0 (Zero-Copy)")
 
-        st.markdown("---")
-        st.subheader("Understanding RDMA in AI Architectures")
-        with st.expander("What is RDMA? The Core Idea of Kernel Bypass"):
-            st.markdown("**Remote Direct Memory Access (RDMA)** allows a network card (NIC) to directly access the memory of another computer without involving the CPU or Operating System (OS) of either. This **kernel bypass** is the key to its performance.")
-            st.image("https://i.imgur.com/3Yt8BZy.png", caption="RDMA bypasses the CPU and OS, enabling direct memory-to-memory communication.")
-
-        with st.expander("Why is RDMA Critical for Distributed AI Training?"):
-            st.markdown("In distributed training, the bottleneck is synchronizing model gradients across all GPUs. RDMA allows one GPU's memory to be directly accessed by another's network card, enabling high-speed, low-latency communication that keeps expensive GPUs fully utilized and drastically reduces training time.")
-
     with sub_tab_cdn:
         st.subheader("Simulating Cloudflare's 'Pay Per Crawl' for AI Bots")
         publisher_price = st.slider("Publisher's Price per Crawl ($)", 0.10, 5.00, 0.50, 0.05, key='cdn_price_slider')
         crawler_bid = st.number_input("AI Crawler's Max Bid ($)", min_value=0.0, value=0.25, step=0.05, format="%.2f", key='cdn_bid_input')
-
         if st.button("Attempt to Crawl Content", key='cdn_button'):
             if crawler_bid >= publisher_price:
                 st.success(f"**HTTP 200 OK** - Request Successful! Bid of ${crawler_bid:.2f} was sufficient.")
